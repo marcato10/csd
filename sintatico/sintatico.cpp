@@ -22,6 +22,8 @@ Token Lexico() {
     return lexer.Lexic();
 }
 
+//FALTA REVISAR PROCEDIMENTO E FUNÇÃO
+
 using namespace std;
 
 Token analisa_tipo(Token token);
@@ -69,6 +71,7 @@ Token analisa_variaveis(Token token){
                     token = Lexico();
                     if(token.simbolo == "sdoispontos"){
                         cout << "comando ',:' nao existe" << endl;
+                        exit(EXIT_FAILURE); 
                     }
                 }
             }
@@ -146,6 +149,7 @@ Token analisa_declaracao_func(Token token){ //PARAMOS AQUI
             token = analisa_tipo(token);
             if(token.simbolo == "sponto_virgula"){
                 token = analisa_bloco();
+                //retorna coisa dps do fim
             }
             else{
                 cout << "faltou o ponto e virgula" << endl;
@@ -170,7 +174,6 @@ Token analisa_sub_rotinas(Token token){
 
         if(token.simbolo == "sprocedimento"){
             token = analisa_declaracao_proc(token);
-            cout<<"-procedimentos? " << token.simbolo << endl;
         }
         else{
             token = analisa_declaracao_func(token);
@@ -205,15 +208,12 @@ Token analisa_chamada_funcao(Token token){
 Token analisa_atrib_chprocedimento(Token token){
     //certo 
     if(token.simbolo == "satribuicao"){
-        token = analisa_atribuicao(token); //!!!!!!!!!!!!!!!!!!!!!!!!!!
+        token = analisa_atribuicao(token); 
+        //retorna quem está dps da exrpessão (normalmente ;)
     }
     else{
-        if(token.simbolo == "sidentificador") // nois que colocamos
-            token = chamada_procedimento(token);
-        else{
-            cout << "esperado nome da funcao ou atriuicao: " << token.simbolo<< " " << token.lexema << endl;
-            exit(EXIT_FAILURE);
-        }
+        token = chamada_procedimento(token);
+        //retorna quem está dps do indentificador (normalmente ;)
     }
     return token;
 }
@@ -225,12 +225,22 @@ Token analisa_se(Token token){
         //certo
         token = Lexico();
         //certo
+
         token = analisa_comando_simples(token);
-        token = Lexico();
+        if(token.simbolo != "ssenao"){ //Eu que fiz para acomodar os comandos compostos
+            token = Lexico();
+        }
+    
         if(token.simbolo == "ssenao"){
             token = Lexico();
             token = analisa_comando_simples(token);
+
+            if(token.simbolo != "sfim"){ //eu que coloquei para funcionar quando tem comandos depois de um inicio e fim do enquanto 
+                token = analisa_comando_simples(token);
+            }
+
         }
+        
         return token;
     }
     else{
@@ -244,7 +254,6 @@ Token analisa_fator(Token token){
         // Variável ou Função
         token = analisa_chamada_funcao(token);
         token = Lexico();
-        cout << "analisa fator " << token.lexema << endl;
     }
     else if (token.simbolo == "snumero") {
         // Número
@@ -267,7 +276,7 @@ Token analisa_fator(Token token){
             exit(EXIT_FAILURE);
         }
     }
-    else if (token.lexema == "verdadeiro" || token.lexema == "falso") {
+    else if (token.simbolo == "sverdadeiro" || token.simbolo == "sfalso") {
         // Constante booleana
         token = Lexico();
     }
@@ -305,7 +314,8 @@ Token analisa_expressao_simples(Token token){ // AQUI ELE TA FLANDO QUE PRECISA 
 
 }
 
-Token analisa_expressao(Token token){
+Token analisa_expressao(Token token){ //retorna o prox dps da expressão
+
     token = analisa_expressao_simples(token);
     if(token.simbolo == "smaior" || token.simbolo == "smaiorig" || token.simbolo == "sig" ||
      token.simbolo == "smenor" || token.simbolo == "smenorig"|| token.simbolo == "sdif"){
@@ -318,15 +328,18 @@ Token analisa_expressao(Token token){
 
 Token analisa_enquanto(Token token){
     token = analisa_expressao(token);
+
     if(token.simbolo == "sfaca"){
         token = Lexico();
-        cout << "dentro do faca " << token.lexema << endl;
-        return analisa_comando_simples(token);
+        token = analisa_comando_simples(token);
+
+        return token;
     }
     else{
         cout << "esperado o faca" << endl;
         exit(EXIT_FAILURE);
     }
+
 }
 
 Token analisa_leia(Token token){
@@ -369,13 +382,7 @@ Token analisa_escreva(Token token){
                 token = Lexico();
                 //retorna
                 //certo
-                if(token.simbolo == "sponto_virgula"){
-                    return token;
-                }
-                else{
-                    cout << "Esperado ponto e virgula" << endl;
-                    exit(EXIT_FAILURE);
-                }
+                return token;
             }
             else{
                 cout << "Precisa fechar o parenteses" << endl;
@@ -393,51 +400,58 @@ Token analisa_escreva(Token token){
     }
 }
 
-Token analisa_comando_simples(Token token){
+Token analisa_comando_simples(Token token){ //se for comando unico retorna ; se for composto devolve oq ta depois do inicio
     
     if(token.simbolo == "sidentificador"){
         //certo
         token = Lexico();
         token = analisa_atrib_chprocedimento(token);
+        //retorna ;
     }
 
     else if(token.simbolo == "sse"){
         token = Lexico();
         token = analisa_se(token);
+        //retorna certo
     }
 
     else if(token.simbolo == "senquanto"){
         token = Lexico();
         token = analisa_enquanto(token);
+
+        if(token.simbolo != "sponto_virgula" && token.simbolo != "sfim"){ //eu que coloquei para funcionar quando tem comandos depois de um inicio e fim do enquanto 
+            token = analisa_comando_simples(token);
+        }
+
+        //retorna certo
     }
 
     else if(token.simbolo == "sleia"){
-        //certo
         token = Lexico();
-        //certo
         token = analisa_leia(token);
+        //retorna ;
     }
 
     else if(token.simbolo == "sescreva"){
         token = Lexico();
         token = analisa_escreva(token);
+        //retorna ;
     }
 
     else{
-        //token = Lexico();   MEXI AQUI LALALA
         token = analisa_comandos(token);
     }
     //certo
     return token;
 }
 
-Token analisa_comandos(Token token){
+Token analisa_comandos(Token token){ //retorna oq tem dps do fim
     //cheguei certinho
     if(token.simbolo == "sinicio"){
         token = Lexico();
         //certo
         token = analisa_comando_simples(token);
-        cout << "fim ? : " << token.lexema << endl;
+        //retorna ponta o virgula do comando
         //certo
         while(token.simbolo != "sfim"){
 
@@ -446,6 +460,10 @@ Token analisa_comandos(Token token){
 
                 if(token.simbolo != "sfim"){
                     //certo
+                    if(token.simbolo == "sponto"){
+                        cout << "faltou colocar o fim do inicio" << endl;
+                        exit(EXIT_FAILURE);
+                    }
                     token = analisa_comando_simples(token);
                 }
             }
@@ -455,7 +473,7 @@ Token analisa_comandos(Token token){
             }
         }
         token = Lexico();
-        cout << "estou retornando inicio  " << token.lexema << endl;
+        //comando retorna oq tem dps do fim
         return token;
     }
     else{
@@ -468,10 +486,12 @@ Token analisa_bloco(){
     Token token = Lexico();
     //aqui chega var
     token = analisa_et_variaveis(token);
+    //retorna prox dps do ponto e virgula
     //certo
     token = analisa_sub_rotinas(token);
     //chega inicio certo
     token = analisa_comandos(token);
+    //chega quem está depois do fim
     return token;
 }
 
@@ -488,7 +508,7 @@ void sintatico(){
                 token = analisa_bloco();
                 if(token.simbolo == "sponto"){
                     token = Lexico();
-                    if(token.lexema != ""){
+                    if(token.simbolo != ""){
                         cout << "comandos apos o ponto final nao sao aceitos" << endl;
                         exit(EXIT_FAILURE);
                     }
