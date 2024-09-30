@@ -2,18 +2,17 @@
 #ifndef SINTATICO_HPP
 #define SINTATICO_HPP
 
+#include "../lexical/lexical.hpp" // Inclua o header do analisador léxico para acessar Token
 #include <string>
-#include "lexical.hpp" // Inclua o header do analisador léxico para acessar Token
-
 
 // sintatico.hpp
 
 // Declaração externa do lexer
 extern LexicalAnalyzer lexer;
 
-
 // Declaração das funções
-Token Lexico(); //todo Lexico() precisa ser o metodo Lexico presente no lexical.cpp
+Token Lexico(); // todo Lexico() precisa ser o metodo Lexico presente no
+                // lexical.cpp
 Token analisa_tipo(Token token);
 Token analisa_variaveis(Token token);
 Token analisa_et_variaveis(Token token);
